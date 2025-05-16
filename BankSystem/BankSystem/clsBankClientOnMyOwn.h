@@ -13,7 +13,8 @@ class clsBankClientOnMyOwn : public clsPerson
 	
 private:
 
-	enum enMode { EmptyMode = 0, UpdateMode = 1 };
+	enum enMode { EmptyMode = 0, UpdateMode = 1, AddNewMode
+	=2};
 	enMode _Mode;
 	string _AccountNumber;
 	string _PinCode;
@@ -34,9 +35,36 @@ private:
 	{
 		return clsBankClientOnMyOwn("", "", "", "", clsBankClientOnMyOwn::EmptyMode, "", "", 0);
 	}
-	
+	void _Update()
+	{
+		vector<clsBankClientOnMyOwn> _vClients;
 
-	
+		_vClients = _LoadClientsDataFromFile();
+		for (clsBankClientOnMyOwn& val : _vClients)
+		{
+			if (val.AccountNumber() == AccountNumber())//search in the vector of clients on the editedClient in the memory
+			{
+				val = *this; //this refer to object i edited in the Main (in the memory) 
+				break;// and we pass a pointer refer to the edited one into val 
+			}
+		}
+		_SaveClientsDataToFile(_vClients);
+	}
+
+	void _AddNewClient()
+	{
+		_AddDataLineToFile(_ConvertClientObjectToLine(*this));
+	}
+	void _AddDataLineToFile(string stringOfNewClient)
+	{
+		fstream myFile;
+		myFile.open("Clients.txt", ios::out | ios::in);
+		if (myFile.is_open())
+		{
+			myFile << stringOfNewClient << endl;
+			myFile.close();
+		}
+	}
 public:
 	clsBankClientOnMyOwn(string FirstName,string LastName,string Email,string Phone,
 		enMode _Mode,string _AccountNumber,string _PinCode,float _AccountBalance)
@@ -150,16 +178,17 @@ public:
 	return (!c.IsEmpty());
 	}
 
-	static clsBankClientOnMyOwn _GetEmptyClientObject2()
+	//my naive approach
+	/*static clsBankClientOnMyOwn _GetEmptyClientObject2()
 	{
 		return  _GetEmptyClientObject();
-	}
+	}*/
 
-	static string _ConvertClientObjectToLine(clsBankClientOnMyOwn & Client)
+	static string _ConvertClientObjectToLine(clsBankClientOnMyOwn & Client,string seprator= "#//#")
 	{
-		return Client.FirstName+"#//#"+ Client.LastName+ "#//#" + Client.Email+ "#//#" +
-			Client.Phone+ "#//#" + Client.AccountNumber()+ "#//#" +
-			Client.PinCode+ "#//#" + to_string(Client.AccountBalance);
+		return Client.FirstName+ seprator + Client.LastName+ seprator + Client.Email+ seprator +
+			Client.Phone+ seprator + Client.AccountNumber()+ seprator +
+			Client.PinCode+ seprator + to_string(Client.AccountBalance);
 	}
 	static void _SaveClientsDataToFile(vector<clsBankClientOnMyOwn>& vectorOfClients)
 	{
@@ -179,7 +208,7 @@ public:
 	
 	}
 
-	static vector<clsBankClientOnMyOwn> _LoadDataFromFile()
+	static vector<clsBankClientOnMyOwn> _LoadClientsDataFromFile()
 	{
 		vector<clsBankClientOnMyOwn>vClients;
 		fstream myFile;
@@ -196,22 +225,13 @@ public:
 		}
 		return vClients;
 	}
-	void _Update()
+	
+	static clsBankClientOnMyOwn  GetAddNewClientObject(string accNumber)
 	{
-		vector<clsBankClientOnMyOwn> _vClients;
-
-		_vClients = _LoadDataFromFile();
-		for (clsBankClientOnMyOwn & val : _vClients)
-		{
-			if (val.AccountNumber() == AccountNumber())//search in the vector of clients on the editedClient in the memory
-			{
-				val = *this; //this refer to object i edited in the Main (in the memory) 
-				break;// and we pass a pointer refer to the edited one into val 
-			}
-		}
-		_SaveClientsDataToFile(_vClients);
+		return  clsBankClientOnMyOwn("", "", "", "", enMode::AddNewMode, accNumber, "", 0);;
 	}
-	enum enSaveResults {svFailEmptyObject=0,svSucceeded=1};
+	enum enSaveResults {svFailEmptyObject=0,svSucceeded=1 , svFaildAccountNumberExist=2
+	};
 
 	enSaveResults  Save()
 	{
@@ -225,6 +245,18 @@ public:
 		case enMode::UpdateMode:
 			_Update();
 			return enSaveResults::svSucceeded;
+		case enMode::AddNewMode:
+			if (clsBankClientOnMyOwn::IsClientExist(_AccountNumber))
+			{
+				return svFaildAccountNumberExist;
+			}
+			else
+			{
+				_AddNewClient();
+				_Mode = enMode::UpdateMode;
+				return svSucceeded;
+			}
+			
 		default:
 			break;
 		}

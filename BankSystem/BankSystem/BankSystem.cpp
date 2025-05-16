@@ -58,6 +58,37 @@ void UpdateClient()
     clientToEdit.Save();
 }
 
+void AddNewClient()
+{
+    cout << "Enter Acount number of a new Client you want to add to databse\n";
+    string accNum = clsInputValidate::ReadString();
+    while (clsBankClientOnMyOwn::IsClientExist(accNum))
+    {
+        cout << "Account Number You enter Exist in database  try another one: \n";
+        accNum = clsInputValidate::ReadString();
+    }
+    clsBankClientOnMyOwn NewClient=clsBankClientOnMyOwn::GetAddNewClientObject(accNum);
+    
+    ReadClientInfo(NewClient);
+
+    clsBankClientOnMyOwn::enSaveResults SaveResults;
+    SaveResults = NewClient.Save();
+    if (SaveResults == clsBankClientOnMyOwn::enSaveResults::svSucceeded)
+    {
+        cout << "new account Added succesfully To databse" << endl;
+        NewClient.Print();
+    }
+    else if (SaveResults == clsBankClientOnMyOwn::enSaveResults::svFailEmptyObject)
+    {
+    
+        cout << "\nError account was not saved because it's Empty";
+    }
+    else if (SaveResults == clsBankClientOnMyOwn::enSaveResults::svFaildAccountNumberExist)
+    {
+        cout << "faid to add to database The Account Number is exist already\n";
+    }
+        
+}
 int main()
 
 {
@@ -93,7 +124,9 @@ int main()
         //clsBankClientOnMyOwn clientToUpdate= clsBankClientOnMyOwn::_GetEmptyClientObject2();// static fn only can call static fn 
         //clientToUpdate._Update2();
     // the correct way 
-    UpdateClient();
+        //UpdateClient();
+    //3rd video
+        AddNewClient();
 //1st video
     system("pause>0");
     return 0;
